@@ -1,0 +1,31 @@
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  schedule:
+    # Runs "at minute 0 every hour" (see https://crontab.guru)
+    - cron: '0 * * * *'
+
+  # manually
+  workflow_dispatch:
+
+jobs:
+  checkup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check http status code of production site
+        uses: lakuapik/gh-actions-http-status@v1
+        with:
+          sites: '["${{ secrets.URLTOCHECK }}"]'
+          topic: "${{ secrets.TOPICTONOTIFY }}"
+          expected: '[200]'
+      - name: ntfy-failed-notifications
+        uses: niniyas/ntfy-action@master
+        if: failure()
+        with:
+          url: 'https://ntfy.sh'
+          topic: '$topic'
+          priority: 5
+          tags: +1,action,failed
+          details: Site down!
